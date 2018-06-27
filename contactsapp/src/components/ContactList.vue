@@ -4,10 +4,6 @@
         <button class="btn btn-primary" @click="addContact()">
             새로운 연락처 추가하기</button>
     </p>
-    <p class="searchcontact">
-        <button class="btn btn-primary" @click="searchContact()">
-            검색</button>
-    </p>
     <div id="example">
     <table id="list" class="table table-striped table-bordered table-hover">
         <thead>
@@ -37,27 +33,25 @@
 </template>
 
 <script>
-import eventBus from '../EventBus';
+import Constant from '../constant';
+import { mapState } from 'vuex';
 export default {
     name : 'contactList',
-    props : [ 'contactlist' ],
+    computed : mapState([ 'contactlist' ]),
     methods : {
         addContact : function() {
-            eventBus.$emit("addContactForm");
+            this.$store.dispatch(Constant.ADD_CONTACT_FORM);
         },
         editContact : function(no) {
-            eventBus.$emit("editContactForm", no)
+            this.$store.dispatch(Constant.EDIT_CONTACT_FORM, {no:no});
         },
         deleteContact : function(no) {
             if (confirm("정말로 삭제하시겠습니까?") == true) {
-                eventBus.$emit('deleteContact', no);
+                this.$store.dispatch(Constant.DELETE_CONTACT, {no:no});
             }
         },
         editPhoto : function(no) {
-            eventBus.$emit("editPhoto", no);
-        },
-        searchContact : function(name) {
-            eventBus.$emit("searchContact", name);
+            this.$store.dispatch(Constant.EDIT_PHOTO_FORM, {no:no});
         }
     }
 }

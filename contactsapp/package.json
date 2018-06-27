@@ -12,9 +12,11 @@
   "dependencies": {
     "axios": "^0.18.0",
     "es6-promise": "^4.2.4",
+    "lodash": "^4.17.10",
     "vue": "^2.5.2",
     "vue-instantsearch": "^1.7.0",
-    "vuejs-paginate": "^1.9.3"
+    "vuejs-paginate": "^1.9.3",
+    "vuex": "^3.0.1"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

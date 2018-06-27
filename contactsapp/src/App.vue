@@ -2,9 +2,8 @@
   <div id="container">
       <div class="page-header">
          <h1 class="text-center">연락처 관리 애플리케이션</h1>
-      </div>
-      <component :is="currentView" :contact="contact"></component>
-      <contactList :contactlist="contactlist"></contactList>
+      <component :is="currentView"></component>
+      <contactList></contactList>
       <paginate ref="pagebuttons"
         :page-count="totalpage"
         :page-range="7"
@@ -14,161 +13,48 @@
         :next-text="'다음'"
         :container-class="'pagination'"
         :page-class="'page-item'">
-      </paginate> 
+      </paginate>
+      <search placeholder="두글자 이상 입력후 엔터!"></search>
   </div>
-        
+  </div>
 </template>
 
 <script>
-import Vue from 'vue';
-
 import ContactList from './components/ContactList';
-import AddContact from './components/AddContact';
-import UpdateContact from './components/UpdateContact';
+import ContactForm from './components/ContactForm';
 import UpdatePhoto from './components/UpdatePhoto';
-import Search from './components/Search';
-
+import Search from './components/Search.vue';
 import CONF from './Config.js';
-import eventBus from './EventBus.js';
+import Constant from './constant';
 import Paginate from 'vuejs-paginate';
-
+import _ from 'lodash';
+import { mapState } from 'vuex';
 export default {    
     name: 'app',
-    components : { ContactList, AddContact, UpdateContact, UpdatePhoto, Paginate },
-    data: function() {
-        return { 
-            currentView : null, 
-            contact : { no:0, name:'', tel:'', address:'', photo:'' },
-            contactlist : {
-                pageno:1, pagesize: CONF.PAGESIZE, totalcount:0, contacts:[]
+    components : { ContactList, ContactForm, UpdatePhoto, Paginate, Search },
+    computed : _.extend({
+            totalpage : function() {
+                var totalcount = this.contactlist.totalcount;
+                var pagesize = this.contactlist.pagesize;
+                return Math.floor((totalcount - 1) / pagesize) + 1;
             }
-        }
-    },
-    computed : {
-        totalpage : function() {
-            return Math.floor((this.contactlist.totalcount - 1) / this.contactlist.pagesize) + 1;
+        }, mapState([
+            'contactlist', 'currentView'
+        ])
+    ),
+    watch : {
+        'contactlist.pageno' : function(page) {
+            this.$refs.pagebuttons.selected= page-1;
         }
     },
     mounted : function() {
-        this.fetchContacts();
-        eventBus.$on("cancel", () => {
-            this.currentView = null;
-        });
-        eventBus.$on("addSubmit", (contact) => {
-            this.currentView = null;
-            this.addContact(contact);
-        });
-        eventBus.$on("updateSubmit", (contact) => {
-            this.currentView = null;
-            this.updateContact(contact);
-        });
-        eventBus.$on("addContactForm", () => {
-            this.currentView = 'addContact';
-        });
-        eventBus.$on("editContactForm", (no) => {
-            this.fetchContactOne(no)
-            this.currentView = 'updateContact';
-        });
-        eventBus.$on("deleteContact", (no) => {
-            this.deleteContact(no);
-        });
-        eventBus.$on("editPhoto", (no) => {
-            this.fetchContactOne(no)
-            this.currentView = 'updatePhoto';
-        });
-        eventBus.$on("updatePhoto", (no, file) => {
-            if (typeof file !=='undefined') {
-                this.updatePhoto(no, file);
-            }
-            this.currentView = null;
-        });
-        eventBus.$on("searchContact", (name) => {
-            this.searchContact(name);
-        });      
+        this.$store.dispatch(Constant.FETCH_CONTACTS);
     },
     methods : {
         pageChanged : function(page) {
-            this.contactlist.pageno = page;
-            this.fetchContacts();
-        },
-        fetchContacts : function() {
-            this.$axios.get(CONF.FETCH, {
-                params : { 
-                    pageno:this.contactlist.pageno, 
-                    pagesize:this.contactlist.pagesize 
-                } 
-            })
-            .then((response) => {
-                this.contactlist = response.data;
-            })
-            .catch((ex)=> {
-                console.log('fetchContacts failed', ex);
-                this.contactlist.contacts = [];
-            })
-        },
-        addContact : function(contact) {
-            this.$axios.post(CONF.ADD,  contact)
-            .then((response) => {
-                this.contactlist.pageno = 1;
-                this.fetchContacts();
-            })
-            .catch((ex)=> {
-                console.log('addContact failed : ', ex);
-            })
-        },
-        updateContact : function(contact) {
-            this.$axios.put(CONF.UPDATE.replace("${no}", contact.no), contact)
-            .then((response) => {
-                this.fetchContacts();
-            })
-            .catch((ex) => {
-                console.log('updateContact failed : ', ex);
-            })
-        },
-        fetchContactOne : function(no) {
-            this.$axios.get(CONF.FETCH_ONE.replace("${no}", no))
-            .then((response) => {
-                this.contact = response.data;
-            })
-            .catch((ex)=> {
-                console.log('fetchContactOne failed', ex);
-            })
-        },
-        deleteContact : function(no) {
-            this.$axios.delete(CONF.DELETE.replace("${no}", no))
-            .then((response) => {
-                this.fetchContacts();
-            })
-            .catch((ex) => {
-                console.log('delete failed', ex);
-            })
-        },
-        updatePhoto : function(no, file) {
-            var data = new FormData();
-            data.append('photo', file);
-            this.$axios.post(CONF.UPDATE_PHOTO.replace("${no}", no), data)
-            .then((response) => {
-                this.fetchContacts();
-            })
-            .catch((ex) => {
-                console.log('updatePhoto failed', ex);
-            });
-        },        
-        searchContact : function(name) {
-          this.$axios.get(CONF.SEARCH.replace("${name}", name))
-          .then((response) => {
-            this.contact = response.data;
-          })
-          .catch((ex) => {
-            console.log('search failed', ex);
-          });
+            this.$store.dispatch(Constant.FETCH_CONTACTS, { pageno:page })
         }
-    },
-    watch : {
-        ['contactlist.pageno'] : function() {
-            this.$refs.pagebuttons.selected = this.contactlist.pageno-1;
-        }
-    },
+    }
 }
 </script>
 

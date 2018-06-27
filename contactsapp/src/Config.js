@@ -17,5 +17,5 @@ export default {
     // 연락처 사진 업로드->변경
     UPDATE_PHOTO: BASE_URL + "/contacts/${no}/photo",
     // 연락처 검색
-    SEARCH: BASE_URL + "/contacts/${name}"
+    SEARCH_CONTACT: BASE_URL + "/contacts/${name}"
 }
